@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Local Storage Setup
+# Local Storage
 ART_DIR = "portfolio_artwork"
 PROFILE_DIR = "portfolio_profile"
 
@@ -18,7 +18,7 @@ for folder in [ART_DIR, PROFILE_DIR]:
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-# Session State Setup
+# Session State
 if "master_pass" not in st.session_state:
     st.session_state.master_pass = "1234"
 if "is_admin" not in st.session_state:
@@ -45,7 +45,7 @@ THEMES = {
 
 t = THEMES[st.session_state.current_theme]
 
-# Inject Dynamic CSS Theme
+# Inject Dynamic CSS
 st.markdown(f"""
     <style>
     .stApp {{ background-color: {t['bg']}; color: {t['text']}; }}
@@ -78,14 +78,14 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. Header & Discrete Icon Login Gate
+# 2. Header & Discrete Icon
 col_h1, col_lock = st.columns([12, 1])
 with col_h1:
     st.title(f"🎨 {st.session_state.artist_name.upper()}")
     st.caption("Click any panel below to view the Inside Space • Live Portfolio Engine")
 
 with col_lock:
-    # Discrete Settings Icon Button
+    # Settings Icon Button rahhhh
     if not st.session_state.is_admin:
         if st.button("⚙️", help="Editor Login"):
             st.session_state.show_gate_field = not st.session_state.get("show_gate_field", False)
@@ -94,7 +94,7 @@ with col_lock:
             st.session_state.is_admin = False
             st.rerun()
 
-# Secret Passcode Input Dropdown
+# Secret Passcode, i will actually cry right now, cause i just cant-
 if not st.session_state.is_admin and st.session_state.get("show_gate_field", False):
     col_gate1, col_gate2 = st.columns([4, 1])
     with col_gate1:
@@ -110,7 +110,7 @@ if not st.session_state.is_admin and st.session_state.get("show_gate_field", Fal
 
 st.divider()
 
-# 3. PROFILE, THEME, SECURITY & UPLOAD DASHBOARD
+# 3. PROFILE, THEME, SECURITY & UPLOAD DASHBOARD ayeee im locked in.
 if st.session_state.is_admin:
     with st.expander("⚙️ PROFILE, THEME & SITE SETTINGS", expanded=True):
         col_ed1, col_ed2 = st.columns(2)
@@ -124,7 +124,7 @@ if st.session_state.is_admin:
             st.session_state.bio_text = st.text_area("Bio / About Me", st.session_state.bio_text)
             st.session_state.contact_info = st.text_input("Contact Info & Socials", st.session_state.contact_info)
             
-            # Theme Selector
+            # Theme Selector why the hell did i do this..
             chosen_theme = st.selectbox("🎨 Choose Site Theme", list(THEMES.keys()), index=list(THEMES.keys()).index(st.session_state.current_theme))
             if chosen_theme != st.session_state.current_theme:
                 st.session_state.current_theme = chosen_theme
@@ -148,7 +148,7 @@ if st.session_state.is_admin:
                     st.rerun()
 
             st.divider()
-            # Passcode Security Manager
+            # Passcode Security Manager headache gng, headache
             st.subheader("🔑 Security Settings")
             new_pass_input = st.text_input("Change Admin Passcode", type="password", key="new_pass_input")
             if st.button("Update Passcode"):
@@ -191,7 +191,7 @@ if st.session_state.is_admin:
 
     st.divider()
 
-# 4. BIO PANEL
+# 4. BIO PANEL ayeee numeber 2
 with st.container():
     st.subheader("👤 BIO PANEL")
     col_bio_img, col_bio_txt = st.columns([1, 2])
@@ -210,7 +210,7 @@ with st.container():
 
 st.divider()
 
-# 5. INSIDE SPACE MODAL DIALOG
+# 5. INSIDE SPACE MODAL DIALOG ayee... RAHH
 @st.dialog("🖼️ INSIDE SPACE PANEL", width="large")
 def open_inside_space(item_path, is_group=False):
     if is_group:
@@ -251,7 +251,7 @@ def open_inside_space(item_path, is_group=False):
                 st.success("Deleted from portfolio!")
                 st.rerun()
 
-# 6. ARTWORK DECK
+# 6. ARTWORK DECK damnnnn
 st.subheader("🖼️ ARTWORK DECK")
 
 deck_items = []
