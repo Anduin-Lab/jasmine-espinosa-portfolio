@@ -78,32 +78,44 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. Header & Admin Login
-col_h1, col_lock = st.columns([5, 1])
+# 2. Header & Discrete Icon Login Gate
+col_h1, col_lock = st.columns([12, 1])
 with col_h1:
     st.title(f"🎨 {st.session_state.artist_name.upper()}")
     st.caption("Click any panel below to view the Inside Space • Live Portfolio Engine")
+
 with col_lock:
+    # Discrete Settings Icon Button
     if not st.session_state.is_admin:
-        if st.button("🔒 Login Editor"):
-            pass_attempt = st.text_input("Enter Passcode:", type="password", key="pass_gate")
-            if pass_attempt == st.session_state.master_pass:
-                st.session_state.is_admin = True
-                st.rerun()
-            elif pass_attempt != "":
-                st.error("Wrong Code!")
+        if st.button("⚙️", help="Editor Login"):
+            st.session_state.show_gate_field = not st.session_state.get("show_gate_field", False)
     else:
-        if st.button("🔓 Exit Editor"):
+        if st.button("🔓", help="Exit Editor Mode"):
             st.session_state.is_admin = False
             st.rerun()
 
+# Secret Passcode Input Dropdown
+if not st.session_state.is_admin and st.session_state.get("show_gate_field", False):
+    col_gate1, col_gate2 = st.columns([4, 1])
+    with col_gate1:
+        pass_attempt = st.text_input("Enter Key Passcode:", type="password", key="pass_gate", label_visibility="collapsed")
+    with col_gate2:
+        if st.button("Unlock"):
+            if pass_attempt == st.session_state.master_pass:
+                st.session_state.is_admin = True
+                st.session_state.show_gate_field = False
+                st.rerun()
+            else:
+                st.error("Invalid Code")
+
 st.divider()
 
-# 3. PROFILE, THEME & UPLOAD DASHBOARD
+# 3. PROFILE, THEME, SECURITY & UPLOAD DASHBOARD
 if st.session_state.is_admin:
     with st.expander("⚙️ PROFILE, THEME & SITE SETTINGS", expanded=True):
         col_ed1, col_ed2 = st.columns(2)
         with col_ed1:
+            st.subheader("👤 Profile Info")
             new_artist_name = st.text_input("Artist Name", st.session_state.artist_name)
             if new_artist_name != st.session_state.artist_name:
                 st.session_state.artist_name = new_artist_name
@@ -119,7 +131,7 @@ if st.session_state.is_admin:
                 st.rerun()
             
         with col_ed2:
-            st.write("**Manage Bio Image:**")
+            st.subheader("🖼️ Bio Picture")
             pfp_file = st.file_uploader("Upload New Bio Avatar", type=["png", "jpg", "jpeg", "webp"], key="pfp_up")
             if pfp_file:
                 pfp_path = os.path.join(PROFILE_DIR, "pfp.png")
@@ -135,6 +147,17 @@ if st.session_state.is_admin:
                     st.success("Bio Picture Removed!")
                     st.rerun()
 
+            st.divider()
+            # Passcode Security Manager
+            st.subheader("🔑 Security Settings")
+            new_pass_input = st.text_input("Change Admin Passcode", type="password", key="new_pass_input")
+            if st.button("Update Passcode"):
+                if new_pass_input.strip():
+                    st.session_state.master_pass = new_pass_input.strip()
+                    st.success("Passcode Updated Successfully!")
+                else:
+                    st.error("Passcode cannot be empty!")
+
         st.divider()
         st.subheader("🖼️ Upload Artwork Panels")
         upload_mode = st.radio("Upload Mode:", ["Bundle into 1 Grouped Panel", "Create Separate Panels"], horizontal=True)
@@ -148,7 +171,6 @@ if st.session_state.is_admin:
         if art_files:
             if st.button("🚀 Publish Uploads"):
                 if upload_mode == "Bundle into 1 Grouped Panel" and len(art_files) > 1:
-                    # Clean custom group name or generate standard name
                     if group_custom_name.strip():
                         safe_group_name = "".join([c for c in group_custom_name if c.isalnum() or c in (' ', '_', '-')]).strip()
                         group_folder_name = f"group_{safe_group_name}"
@@ -270,4 +292,4 @@ if deck_items:
             if st.button(f"🔍 Open Inside Space", key=f"btn_open_{idx}"):
                 open_inside_space(item["path"], is_group=item["is_group"])
 else:
-    st.info("No artwork panels in the deck yet. Login to Editor Mode to upload your first piece!")
+    st.info("No artwork panels in the deck yet. Click the ⚙️ icon in the top right to log in and upload your first piece!")
