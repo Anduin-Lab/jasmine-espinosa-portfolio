@@ -10,39 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom Styling
-st.markdown("""
-    <style>
-    .stApp { background-color: #0b0b0f; color: #ffffff; }
-    
-    /* Panel Cards */
-    div[data-testid="stColumn"] > div {
-        background-color: #14141c;
-        border: 2px dashed #262636;
-        border-radius: 16px;
-        padding: 1rem;
-        transition: border-color 0.2s;
-    }
-    div[data-testid="stColumn"] > div:hover {
-        border-color: #ff0055;
-    }
-    
-    /* Buttons */
-    .stButton>button {
-        background-color: #ff0055;
-        color: white;
-        border-radius: 8px;
-        border: none;
-        font-weight: bold;
-        width: 100%;
-    }
-    .stButton>button:hover {
-        background-color: #ff3377;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# 2. Local Storage Setup
+# Local Storage Setup
 ART_DIR = "portfolio_artwork"
 PROFILE_DIR = "portfolio_profile"
 
@@ -50,7 +18,7 @@ for folder in [ART_DIR, PROFILE_DIR]:
     if not os.path.exists(folder):
         os.makedirs(folder)
 
-# Session State
+# Session State Setup
 if "master_pass" not in st.session_state:
     st.session_state.master_pass = "1234"
 if "is_admin" not in st.session_state:
@@ -61,17 +29,60 @@ if "bio_text" not in st.session_state:
     st.session_state.bio_text = "Welcome to my portfolio! I create digital illustrations and concept art."
 if "contact_info" not in st.session_state:
     st.session_state.contact_info = "Instagram: @yourhandle | Email: artist@example.com"
-
-# Slide indices for grouped panels
+if "current_theme" not in st.session_state:
+    st.session_state.current_theme = "Pink & Dark"
 if "slide_indices" not in st.session_state:
     st.session_state.slide_indices = {}
 
-# 3. Header & Admin Login
+# Theme Palette Map
+THEMES = {
+    "Pink & Dark": {"bg": "#0b0b0f", "card": "#14141c", "border": "#ff0055", "btn": "#ff0055", "btn_hover": "#ff3377", "text": "#ffffff"},
+    "Midnight Obsidian": {"bg": "#09090b", "card": "#18181b", "border": "#3f3f46", "btn": "#27272a", "btn_hover": "#3f3f46", "text": "#f4f4f5"},
+    "Deep Purple": {"bg": "#0d0714", "card": "#180e29", "border": "#8b5cf6", "btn": "#7c3aed", "btn_hover": "#6d28d9", "text": "#f3e8ff"},
+    "Matcha Dark": {"bg": "#0a0f0d", "card": "#121d18", "border": "#10b981", "btn": "#059669", "btn_hover": "#047857", "text": "#ecfdf5"},
+    "Minimal Light": {"bg": "#f8fafc", "card": "#ffffff", "border": "#cbd5e1", "btn": "#0f172a", "btn_hover": "#334155", "text": "#0f172a"}
+}
+
+t = THEMES[st.session_state.current_theme]
+
+# Inject Dynamic CSS Theme
+st.markdown(f"""
+    <style>
+    .stApp {{ background-color: {t['bg']}; color: {t['text']}; }}
+    
+    /* Card Panel Framing */
+    div[data-testid="stColumn"] > div {{
+        background-color: {t['card']};
+        border: 2px solid {t['border']};
+        border-radius: 16px;
+        padding: 1.2rem;
+        transition: all 0.2s ease-in-out;
+    }}
+    div[data-testid="stColumn"] > div:hover {{
+        border-color: {t['btn']};
+        transform: translateY(-2px);
+    }}
+    
+    /* Custom Buttons */
+    .stButton>button {{
+        background-color: {t['btn']};
+        color: white;
+        border-radius: 8px;
+        border: none;
+        font-weight: bold;
+        width: 100%;
+    }}
+    .stButton>button:hover {{
+        background-color: {t['btn_hover']};
+    }}
+    </style>
+""", unsafe_allow_html=True)
+
+# 2. Header & Admin Login
 col_h1, col_lock = st.columns([5, 1])
 with col_h1:
-    # Dynamically reflects st.session_state.artist_name
     st.title(f"🎨 {st.session_state.artist_name.upper()}")
-    st.caption("Click any panel below to view the Inside Space • Powered by Python Engine")
+    st.caption("Click any panel below to view the Inside Space • Live Portfolio Engine")
 with col_lock:
     if not st.session_state.is_admin:
         if st.button("🔒 Login Editor"):
@@ -88,9 +99,9 @@ with col_lock:
 
 st.divider()
 
-# 4. PROFILE & SITE SETTINGS DASHBOARD
+# 3. PROFILE, THEME & UPLOAD DASHBOARD
 if st.session_state.is_admin:
-    with st.expander("⚙️ PROFILE & SITE SETTINGS", expanded=True):
+    with st.expander("⚙️ PROFILE, THEME & SITE SETTINGS", expanded=True):
         col_ed1, col_ed2 = st.columns(2)
         with col_ed1:
             new_artist_name = st.text_input("Artist Name", st.session_state.artist_name)
@@ -100,6 +111,12 @@ if st.session_state.is_admin:
                 
             st.session_state.bio_text = st.text_area("Bio / About Me", st.session_state.bio_text)
             st.session_state.contact_info = st.text_input("Contact Info & Socials", st.session_state.contact_info)
+            
+            # Theme Selector
+            chosen_theme = st.selectbox("🎨 Choose Site Theme", list(THEMES.keys()), index=list(THEMES.keys()).index(st.session_state.current_theme))
+            if chosen_theme != st.session_state.current_theme:
+                st.session_state.current_theme = chosen_theme
+                st.rerun()
             
         with col_ed2:
             st.write("**Manage Bio Image:**")
@@ -121,13 +138,23 @@ if st.session_state.is_admin:
         st.divider()
         st.subheader("🖼️ Upload Artwork Panels")
         upload_mode = st.radio("Upload Mode:", ["Bundle into 1 Grouped Panel", "Create Separate Panels"], horizontal=True)
+        
+        group_custom_name = ""
+        if upload_mode == "Bundle into 1 Grouped Panel":
+            group_custom_name = st.text_input("Custom Group Name (Optional)", placeholder="e.g. Character Designs 2026")
+
         art_files = st.file_uploader("Drop Artwork Files Here", type=["png", "jpg", "jpeg", "webp"], accept_multiple_files=True, key="dashboard_uploader")
         
         if art_files:
             if st.button("🚀 Publish Uploads"):
                 if upload_mode == "Bundle into 1 Grouped Panel" and len(art_files) > 1:
-                    # Create a dedicated group directory
-                    group_folder_name = f"group_{int(os.path.getctime('.'))}"
+                    # Clean custom group name or generate standard name
+                    if group_custom_name.strip():
+                        safe_group_name = "".join([c for c in group_custom_name if c.isalnum() or c in (' ', '_', '-')]).strip()
+                        group_folder_name = f"group_{safe_group_name}"
+                    else:
+                        group_folder_name = f"group_Collection_{int(os.path.getctime('.'))}"
+                        
                     group_path = os.path.join(ART_DIR, group_folder_name)
                     os.makedirs(group_path, exist_ok=True)
                     for file in art_files:
@@ -142,7 +169,7 @@ if st.session_state.is_admin:
 
     st.divider()
 
-# 5. BIO PANEL
+# 4. BIO PANEL
 with st.container():
     st.subheader("👤 BIO PANEL")
     col_bio_img, col_bio_txt = st.columns([1, 2])
@@ -161,17 +188,17 @@ with st.container():
 
 st.divider()
 
-# 6. INSIDE SPACE MODAL DIALOG
+# 5. INSIDE SPACE MODAL DIALOG
 @st.dialog("🖼️ INSIDE SPACE PANEL", width="large")
 def open_inside_space(item_path, is_group=False):
     if is_group:
         images = [os.path.join(item_path, f) for f in os.listdir(item_path) if f.lower().endswith(('png', 'jpg', 'jpeg', 'webp'))]
         current_idx = st.session_state.slide_indices.get(item_path, 0) % len(images)
         active_img_path = images[current_idx]
-        title = os.path.basename(item_path).upper()
+        display_title = os.path.basename(item_path).replace("group_", "").replace("_", " ").upper()
     else:
         active_img_path = item_path
-        title = os.path.basename(item_path).split('.')[0].upper()
+        display_title = os.path.basename(item_path).split('.')[0].replace("_", " ").upper()
 
     col_img, col_info = st.columns([1.2, 1])
     
@@ -182,17 +209,17 @@ def open_inside_space(item_path, is_group=False):
             st.caption(f"Image {current_idx + 1} of {len(images)}")
         
     with col_info:
-        st.markdown(f"## {title}")
+        st.markdown(f"## {display_title}")
         st.write("---")
         
-        price = st.text_input("Price / Valuation", "PHP 0.00 / NFS", key=f"p_{title}")
-        medium = st.text_input("Medium / Specs", "Digital Illustration / 300 DPI", key=f"m_{title}")
-        story = st.text_area("Piece Details & Story", "Write details about this artwork piece...", key=f"s_{title}")
+        price = st.text_input("Price / Valuation", "PHP 0.00 / NFS", key=f"p_{display_title}")
+        medium = st.text_input("Medium / Specs", "Digital Illustration / 300 DPI", key=f"m_{display_title}")
+        story = st.text_area("Piece Details & Story", "Write details about this artwork piece...", key=f"s_{display_title}")
         
         st.write("---")
         
         if st.session_state.is_admin:
-            if st.button("🗑️ DELETE THIS PANEL", key=f"del_panel_{title}"):
+            if st.button("🗑️ DELETE THIS PANEL", key=f"del_panel_{display_title}"):
                 if is_group:
                     for f in os.listdir(item_path):
                         os.remove(os.path.join(item_path, f))
@@ -202,10 +229,9 @@ def open_inside_space(item_path, is_group=False):
                 st.success("Deleted from portfolio!")
                 st.rerun()
 
-# 7. ARTWORK DECK
+# 6. ARTWORK DECK
 st.subheader("🖼️ ARTWORK DECK")
 
-# Fetch single files & group directories
 deck_items = []
 for entry in os.listdir(ART_DIR):
     full_p = os.path.join(ART_DIR, entry)
@@ -223,12 +249,12 @@ if deck_items:
                 if not group_imgs:
                     continue
                 
-                # Get active slide index for this group
+                group_display_name = os.path.basename(item["path"]).replace("group_", "").replace("_", " ")
                 current_idx = st.session_state.slide_indices.get(item["path"], 0) % len(group_imgs)
-                st.markdown(f"**Group Panel ({len(group_imgs)} Items)**")
+                
+                st.markdown(f"**📂 {group_display_name} ({len(group_imgs)})**")
                 st.image(Image.open(group_imgs[current_idx]), use_container_width=True)
                 
-                # Slide Navigation Controls
                 nav_col1, nav_col2 = st.columns(2)
                 with nav_col1:
                     if st.button("❮ Prev", key=f"prev_{idx}"):
